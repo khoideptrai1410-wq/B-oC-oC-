@@ -54,7 +54,7 @@
         
         \begin{figure}[h!]
             \centering
-            \includegraphics[width=3.5cm]{itsgu.png}
+            \includegraphics[width=5cm]{itsgu.png}
         \end{figure}
         \vspace*{1cm}
         
@@ -66,11 +66,13 @@
         
         \begin{flushleft}
             \hspace*{5cm}
+            {\fontsize{14pt}{18pt}\selectfont 
             \begin{tabular}{ll}
                 \textcolor{blue}{\textbf{GVHD:}} & \textcolor{blue}{Từ Lãng Phiêu} \\
                 \textcolor{blue}{\textbf{SV:}}   & \textcolor{blue}{Trần Đăng Khôi} \\
-                \textcolor{blue}{\textbf{MSSV:}} & \textcolor{blue}{MSSV: 3124410166 }\\
+                \textcolor{blue}{\textbf{MSSV:}} & \textcolor{blue}{3124410166} \\
             \end{tabular}
+            }
         \end{flushleft}
         
         \vfill
@@ -79,17 +81,16 @@
     \end{center}
 \end{titlepage}
 
-% ==========================================
-% MỤC LỤC VÀ ĐIỀU HƯỚNG
-% ==========================================
+
 \newpage
 \pagenumbering{gobble} % Tạm ẩn đánh số trang ở mục lục
 \tableofcontents
 
-\pagenumbering{arabic} % Bắt đầu đánh số trang từ nội dung chính
 
 % --- NỘI DUNG ---
 
+\newpage
+\pagenumbering{arabic} % Bắt đầu đánh số trang từ nội dung chính
 \section{Kiến Trúc Hệ Thống}
 Rhythmix được xây dựng theo kiến trúc Clean Architecture (còn gọi là Onion Architecture), chia thành bốn lớp rõ ràng với quy tắc phụ thuộc một chiều từ ngoài vào trong.
 
@@ -119,7 +120,7 @@ Mỗi HTTP request được xử lý theo luồng tuần tự như sau:
 \end{enumerate}
 
 \subsection{Công Nghệ Sử Dụng}
-\begin{table}[h!]
+\begin{table}[H]
     \centering
     \begin{tabularx}{\textwidth}{|l|X|}
     \hline
@@ -137,6 +138,27 @@ Mỗi HTTP request được xử lý theo luồng tuần tự như sau:
     \end{tabularx}
     \caption{Hệ sinh thái công nghệ của dự án Rhythmix}
 \end{table}
+
+\subsection{Giao diện Đồ Án}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{giaodien.jpg}
+    \caption{Giao diện Phần mềm nghe nhạc Rhythmix}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Chinatown.jpg}
+    \caption{Giao diện Bài Hát}
+\end{figure}
+
+
+\subsection{ Sơ Đồ ERD của Đồ Án Rhythmix}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{ERDRhythmix.png}
+    \caption{Sơ Đồ Thực Thể Kết Hợp của Rhythmix}
+\end{figure}
 
 \section{Lý Do Chọn Dapper Thay Vì EF Core}
 
@@ -242,7 +264,7 @@ Việc viết SQL thủ công ép buộc nhóm phát triển phải hiểu rõ c
 \end{itemize}
 
 \subsection{Tương Tác Và Lịch Sử Nghe (Interactions \& Play History)}
-\textbf{Endpoint:} \texttt{POST /api/interactions/favorite}, \texttt{POST /api/interactions/history}, \texttt{GET /api/interactions/history}
+\textbf{Endpoint:} \texttt{POST /api/interactions/favorite}, \texttt{POST /api/interactions/history} và  \texttt{GET /api/interactions/history}
 \begin{itemize}
     \item \textbf{Yêu thích (Favorite):} Thao tác bật/tắt (toggle) yêu thích bài hát, dữ liệu lưu giữ tại bảng \texttt{Favorites}. Trang “Bài Hát Đã Thích” sẽ lọc và hiển thị danh sách này.
     \item \textbf{Lịch sử nghe:} Mỗi khi client hoàn tất việc phát một tệp media, một request sẽ được gửi để ghi nhận thông tin (\texttt{UserId}, \texttt{MediaId}, \texttt{PlayedAt}) trực tiếp vào bảng \texttt{PlayHistory}.
@@ -251,68 +273,68 @@ Việc viết SQL thủ công ép buộc nhóm phát triển phải hiểu rõ c
 \end{itemize}
 
 
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
 \section{Sơ Đồ Luồng Các Chức Năng Chính}
-
-\subsection{Xác thực (Authentication)}
+\subsection[]{Xác thực (Authentication)}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_XacThuc.pdf}
 \end{figure}
 
-\subsection{Hồ sơ người dùng (User Profile)}
+\subsection[]{Hồ sơ người dùng (User Profile)}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_HoSoNguoiDung.pdf}
 \end{figure}
 
-\subsection{Thư viện Media (Media Library)}
+\subsection[]{Thư viện Media (Media Library)}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_ThuVienMedia.pdf}
 \end{figure}
 
-\subsection{Audio Player}
+\subsection[]{Audio Player}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_AudioPlayer.pdf}
 \end{figure}
 
-\subsection{Video Player}
+\subsection[]{Video Player}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_VidePlayer.pdf}
 \end{figure}
 
-\subsection{Playlist}
+\subsection[]{Playlist}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_PlayList.pdf}
 \end{figure}
 
-\subsection{Tìm kiếm và Khám phá}
+\subsection[]{Tìm kiếm và Khám phá}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_TimKiemVaKhamPha.pdf}
 \end{figure}
 
-\subsection{Chia sẻ Media}
+\subsection[]{Chia sẻ Media}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_ChiaSe.pdf}
 \end{figure}
 
-\subsection{Thông báo Real-time}
+\subsection[]{Thông báo Real-time}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_ThongBao.pdf}
 \end{figure}
 
-\subsection{Tương tác và Lịch sử nghe}
+\subsection[]{Tương tác và Lịch sử nghe}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Pipeline_TuongTacVaLichSu.pdf}
 \end{figure}
-
+\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 
 
 
@@ -325,14 +347,7 @@ Việc viết SQL thủ công ép buộc nhóm phát triển phải hiểu rõ c
     \item \textbf{Truy vấn SQL phức tạp bằng tay:} Các câu lệnh truy vấn thực hiện JOIN đồng thời nhiều bảng (media, album, owner, playlist) phải viết và thực hiện kiểm thử thủ công hoàn toàn, không có sự hỗ trợ gợi ý code thông minh (IntelliSense) mạnh mẽ như LINQ-to-SQL trên EF Core.
 \end{enumerate}
 
-\section{Hướng Xử Lý}
-\begin{enumerate}
-    \item \textbf{Transaction:} Thiết lập một interface tên \texttt{IDbConnectionFactory} chịu trách nhiệm khởi tạo và trả về một kết nối \texttt{IDbConnection} mới trên mỗi request; thực hiện truyền transaction trực tiếp qua tham số của hàm. Áp dụng triển khai mẫu thiết kế Unit of Work đơn giản đối với các tác vụ ghi đồng thời trên nhiều bảng.
-    \item \textbf{SignalR multi-connection:} Xử lý tốt nhất khi sử dụng cấu trúc dữ liệu thread-safe \texttt{ConcurrentDictionary<string, HashSet<string>>} lưu thông tin dưới dạng (\texttt{userId}, \texttt{connectionIds}). Mỗi khi đẩy notification, tiến hành duyệt và gửi qua toàn bộ danh sách \texttt{connectionIds} của user đó. Thực hiện xóa bỏ \texttt{connectionId} khỏi danh sách khi hàm \texttt{OnDisconnectedAsync} được kích hoạt.
-    \item \textbf{Upload file:} Tiến hành bổ sung cấu hình và phải thực hiện trong file \texttt{Program.cs}: \texttt{builder.WebHost.ConfigureKestrel(opt => opt.Limits.MaxRequestBodySize=...)}. Sử dụng interface \texttt{IFormFile} nhận tệp, thực hiện lưu trữ file dưới chuỗi tên đã được làm sạch (sanitized - loại bỏ ký tự đặc biệt hoặc mã hóa UTF-8). Thiết lập \texttt{StaticFileOptions} kèm thuộc tính \texttt{ServeUnknownFileTypes = true}.
-    \item \textbf{CORS:} Khai báo tường minh cấu hình \texttt{WithOrigins("http://localhost:5173")} kết hợp các phương thức \texttt{AllowCredentials()}, \texttt{AllowAnyHeader()} và \texttt{AllowAnyMethod()} ngay tại file \texttt{Program.cs} của ứng dụng API.
-    \item \textbf{Tối ưu SQL query:} Tách biệt các câu lệnh SQL phức tạp ra các file \texttt{.sql} riêng biệt để chạy thử nghiệm và kiểm tra hiệu năng (Execution Plan) trực tiếp trên công cụ SQL Server Management Studio (SSMS) trước khi đem nhúng vào mã nguồn C\#. Bổ sung các chú thích (comments) làm rõ mục tiêu xử lý của từng đoạn query.
-\end{enumerate}
+
 
 \section{Hướng Dẫn Chạy Project Local}
 
@@ -344,6 +359,9 @@ Việc viết SQL thủ công ép buộc nhóm phát triển phải hiểu rõ c
     \item SQL Server (Hỗ trợ các phiên bản LocalDB, SQLEXPRESS, hoặc bản SQL Server Full)
     \item Git (Dùng để clone dự án mã nguồn)
 \end{itemize}
+
+
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
 
 \subsection{Bước 1: Chuẩn Bị Database}
 Mở công cụ quản lý SQL Server Management Studio (SSMS) hoặc Azure Data Studio, thiết lập kết nối tới instance SQL Server local đang chạy, sau đó mở một cửa sổ Query và thực thi lần lượt các khối lệnh:
@@ -412,6 +430,8 @@ npm run dev
 
 \subsection{Bước 5: Truy Cập Ứng Dụng}
 Mở trình duyệt web bất kỳ và truy cập đường dẫn \texttt{http://localhost:5173}. Sử dụng một trong hai tài khoản dữ liệu seed (chi tiết tại Mục 7) để thực hiện đăng nhập vào hệ thống.
+
+\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 
 \subsection{Lưu Ý Quan Trọng}
 \begin{itemize}
