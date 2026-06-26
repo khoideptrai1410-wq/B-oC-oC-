@@ -1,0 +1,487 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{float}
+
+% Cấu hình margin
+\geometry{
+    left=2.5cm,
+    right=2cm,
+    top=2.5cm,
+    bottom=2.5cm,
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+% Cấu hình hiển thị code
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    showstringspaces=false,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{green!60!black}
+}
+
+\begin{document}
+
+
+
+\begin{titlepage}
+    \begin{center}
+        
+        {\large TRƯỜNG ĐẠI HỌC SÀI GÒN}\\[0.2cm]
+        {\large KHOA CÔNG NGHỆ THÔNG TIN}\\[1.5cm]
+        
+        
+        \begin{figure}[h!]
+            \centering
+            \includegraphics[width=3.5cm]{itsgu.png}
+        \end{figure}
+        \vspace*{1cm}
+        
+        
+        {\large\bfseries\color{blue} Báo cáo Đồ án}\\[0.4cm]
+        {\LARGE\bfseries\color{blue} TuneVaut - Ứng Dụng Phát Nhạc \& Media}\\[0.4cm]
+        \textcolor{blue}{\rule{\textwidth}{1pt}}\\[2.5cm]
+        
+        
+        \begin{flushleft}
+            \hspace*{5cm}
+            \begin{tabular}{ll}
+                \textcolor{blue}{\textbf{GVHD:}} & \textcolor{blue}{Từ Lãng Phiêu} \\
+                \textcolor{blue}{\textbf{SV:}}   & \textcolor{blue}{Trần Đăng Khôi} \\
+                \textcolor{blue}{\textbf{MSSV:}} & \textcolor{blue}{MSSV: 3124410166 }\\
+            \end{tabular}
+        \end{flushleft}
+        
+        \vfill
+        {\large\color{black} TP HỒ CHÍ MINH, NGÀY 26 THÁNG 6 NĂM 2026}
+        
+    \end{center}
+\end{titlepage}
+
+% ==========================================
+% MỤC LỤC VÀ ĐIỀU HƯỚNG
+% ==========================================
+\newpage
+\pagenumbering{gobble} % Tạm ẩn đánh số trang ở mục lục
+\tableofcontents
+
+\pagenumbering{arabic} % Bắt đầu đánh số trang từ nội dung chính
+
+% --- NỘI DUNG ---
+
+\section{Kiến Trúc Hệ Thống}
+Rhythmix được xây dựng theo kiến trúc Clean Architecture (còn gọi là Onion Architecture), chia thành bốn lớp rõ ràng với quy tắc phụ thuộc một chiều từ ngoài vào trong.
+
+\subsection{Tổng Quan Các Lớp}
+\begin{table}[h!]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{Lớp} & \textbf{Mô tả} \\ \hline
+    \texttt{Rhythmix.Domain} & Thực thể nghiệp vụ (Entities), interfaces kho dữ liệu, enum. Không phụ thuộc vào bất kỳ lớp nào khác. \\ \hline
+    \texttt{Rhythmix.Application} & Các Use Cases (CQRS qua MediatR), DTOs, validation (FluentValidation), interfaces dịch vụ. \\ \hline
+    \texttt{Rhythmix.Infrastructure} & Triển khai cụ thể: Dapper repositories, JWT, SignalR Hub, kết nối SQL Server. \\ \hline
+    \texttt{Rhythmix.API} & ASP.NET Core Web API controllers, cấu hình middleware, DI container, static files. \\ \hline
+    \end{tabularx}
+    \caption{Mô tả chức năng các lớp trong kiến trúc}
+\end{table}
+
+\subsection{Luồng Xử Lý Request}
+Mỗi HTTP request được xử lý theo luồng tuần tự như sau:
+\begin{enumerate}
+    \item Controller nhận request, xác thực JWT.
+    \item Controller gửi Command / Query qua \texttt{IMediator} (MediatR).
+    \item \texttt{ValidationBehavior} (pipeline) chạy FluentValidation trước khi qua Handler.
+    \item Handler trong lớp Application gọi repository interface.
+    \item Dapper Repository trong lớp Infrastructure thực thi SQL thô trực tiếp trên SQL Server.
+    \item Kết quả trả về cho client dưới dạng \texttt{ApiResponse<T>} chuẩn hóa.
+\end{enumerate}
+
+\subsection{Công Nghệ Sử Dụng}
+\begin{table}[h!]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{Thành phần} & \textbf{Công nghệ sử dụng} \\ \hline
+    Runtime & .NET 10, ASP.NET Core 10 \\ \hline
+    ORM / Data Access & Dapper (raw SQL) + Microsoft.Data.SqlClient \\ \hline
+    CQRS & MediatR \\ \hline
+    Xác thực & JWT Bearer (Microsoft.AspNetCore.Authentication.JwtBearer) \\ \hline
+    Validation & Fluent Validation \\ \hline
+    Real-time & ASP.NET Core SignalR \\ \hline
+    API Docs & Swagger UI + Scalar \\ \hline
+    Database & SQL Server (LocalDB / SQLEXPRESS) \\ \hline
+    Frontend & React 18+ TypeScript + Vite + Tailwind CSS \\ \hline
+    State & Zustand \\ \hline
+    \end{tabularx}
+    \caption{Hệ sinh thái công nghệ của dự án Rhythmix}
+\end{table}
+
+\section{Lý Do Chọn Dapper Thay Vì EF Core}
+
+\subsection{Kiểm Soát SQL Hoàn Toàn}
+Dapper là một micro-ORM cho phép nhà phát triển viết SQL thô trực tiếp. Với ứng dụng media như Rhythmix, nhiều truy vấn cần tối ưu hóa rất cụ thể (như JOIN nhiều bảng, lọc động theo loại media, phân trang phức tạp) — việc sử dụng EF Core sinh SQL tự động đôi khi không tối ưu và gây khó khăn lớn cho quá trình debug.
+
+\subsection{Hiệu Năng Cao Hơn}
+Dapper gần như không có overhead (chi phí xử lý) so với ADO.NET thuần. Với các tác vụ đọc dữ liệu với tần suất cao như tải thư viện media, lịch sử nghe hay tìm kiếm, Dapper nhanh hơn EF Core đáng kể do cơ chế tối giản, không chạy ngầm change tracking (theo dõi thay đổi) hay lazy loading.
+
+\subsection{Độ Phức Tạp Thấp Hơn}
+EF Core yêu cầu các cấu hình phức tạp liên quan đến DbContext, quản lý migrations, và fluent configuration. Với quy mô dự án này, cấu hình Dapper đơn giản và trực diện hơn nhiều: chỉ cần cung cấp connection string và viết trực tiếp chuỗi SQL string cần thực thi.
+
+\subsection{Học Sâu Về SQL}
+Việc viết SQL thủ công ép buộc nhóm phát triển phải hiểu rõ cấu trúc cơ sở dữ liệu, cách tối ưu hóa index và không bị phụ thuộc quá nhiều vào "hộp đen" của các ORM nâng cao. Điều này hoàn toàn phù hợp với mục tiêu học tập và củng cố kiến thức nền tảng của dự án.
+
+\section{Mô Tả 10 Chức Năng Chính}
+
+\subsection{Xác Thực (Authentication)}
+\textbf{Endpoint:} \texttt{POST /api/auth/register}, \texttt{POST /api/auth/login}, \texttt{POST /api/auth/logout}
+\begin{itemize}
+    \item \textbf{Đăng ký:} Kiểm tra email trùng lặp trong hệ thống, hash mật khẩu an toàn, tạo bản ghi đồng thời ở bảng \texttt{AspNetUsers} và \texttt{UserProfiles}.
+    \item \textbf{Đăng nhập:} Xác minh email và mật khẩu, sinh JWT token chứa các claims quan trọng (\texttt{UserId}, \texttt{Email}), trả về token kèm thông tin cơ bản của người dùng.
+    \item \textbf{Đăng xuất:} Xử lý hoàn toàn phía client bằng cách xóa token lưu trữ (do kiến trúc hệ thống dùng stateless JWT).
+    \item Token được truyền qua header \texttt{Authorization: Bearer \{token\}} đối với mọi API yêu cầu bảo mật.
+\end{itemize}
+
+\subsection{Hồ Sơ Người Dùng (User Profile)}
+\textbf{Endpoint:} \texttt{GET /api/profile/\{userId\}}, \texttt{PUT /api/profile}
+\begin{itemize}
+    \item Mỗi user có bảng \texttt{UserProfiles} riêng chứa các trường dữ liệu: \texttt{FullName}, \texttt{Bio}, \texttt{AvatarUrl}.
+    \item \textbf{Xem hồ sơ:} Trả về thông tin công khai kèm số lượng người theo dõi (followers) và đang theo dõi (following).
+    \item \textbf{Cập nhật hồ sơ:} Cho phép người dùng thay đổi tên, bio, ảnh đại diện (upload file trực tiếp lên thư mục \texttt{wwwroot/uploads/images/}).
+    \item Chức năng Follow/Unfollow được tích hợp và xử lý qua quan hệ ở bảng trung gian \texttt{Follows}.
+\end{itemize}
+
+\subsection{Thư Viện Media (Media Library)}
+\textbf{Endpoint:} \texttt{GET /api/media}, \texttt{POST /api/media/upload}, \texttt{DELETE /api/media/\{id\}}
+\begin{itemize}
+    \item Hệ thống hỗ trợ xử lý hai định dạng media chính: Audio (MP3) và Video (MP4).
+    \item File vật lý được lưu trữ trực tiếp trên đĩa tại backend: \texttt{wwwroot/uploads/audio/} và \texttt{wwwroot/uploads/videos/}.
+    \item Metadata (tiêu đề, thời lượng, MIME type, kích thước file, \texttt{ThumbnailUrl}) được lưu vào bảng \texttt{MediaItems}.
+    \item Media có thể liên kết thuộc về một Album cụ thể hoặc đứng độc lập.
+    \item Bảng lưu trữ hỗ trợ cột \texttt{ViewCount} phục vụ thống kê tổng số lượt nghe/xem.
+\end{itemize}
+
+\subsection{Audio Player}
+\textbf{Frontend component:} \texttt{PlayerBar.tsx} + \texttt{musicService.ts}
+\begin{itemize}
+    \item Thanh điều khiển phát nhạc (Player bar) cố định ở cuối màn hình, đảm bảo không bị che khuất hoặc ngắt quãng khi người dùng điều hướng qua các trang khác.
+    \item Hỗ trợ các tính năng cơ bản: phát/tạm dừng, tua nhanh, điều chỉnh âm lượng, chuyển bài (next/previous) trong danh sách hàng đợi.
+    \item Stream audio trực tiếp thông qua static file của backend (\texttt{/uploads/audio/...}).
+    \item Khi kết thúc bài hát, hệ thống tự động chuyển sang bài tiếp theo trong hàng chờ.
+    \item Lịch sử nghe được tự động ghi lại sau mỗi lần phát hoàn tất thông qua việc gọi API \texttt{RecordPlayHistory}.
+\end{itemize}
+
+\subsection{Video Player}
+\textbf{Frontend component:} \texttt{VideoPlayerModal.tsx}
+\begin{itemize}
+    \item Hiển thị dưới dạng một Modal overlay nổi lên trên giao diện, hỗ trợ phát trực tiếp video MP4.
+    \item Sử dụng thẻ HTML5 \texttt{<video>} với hệ thống điều khiển native cơ bản (play, pause, seek, fullscreen).
+    \item Stream video qua endpoint static file, hỗ trợ cấu hình \texttt{Range} header phục vụ cho thao tác tua nhanh một cách mượt mà.
+    \item Giao diện hiển thị ảnh đại diện từ trường \texttt{ThumbnailUrl} trước khi người dùng nhấn phát video.
+\end{itemize}
+
+\subsection{Playlist}
+\textbf{Endpoint:} \texttt{GET, POST /api/playlists}, \texttt{PUT /api/playlists/\{id\}}, \texttt{DELETE /api/playlists/\{id\}}
+\begin{itemize}
+    \item Khởi tạo playlist đi kèm tên, mô tả ngắn và cấu hình chế độ công khai hoặc riêng tư (\texttt{IsPublic}).
+    \item Thêm hoặc xóa các track nhạc ra khỏi playlist, quản lý thứ tự hiển thị linh hoạt qua cột \texttt{SortOrder} trong bảng \texttt{PlaylistTrack}.
+    \item Giao diện hỗ trợ hành động kéo-thả (drag-and-drop) để sắp xếp nhanh thứ tự bài hát, đồng thời cập nhật \texttt{SortOrder} hàng loạt về database.
+    \item Các playlist đặt ở chế độ công khai có thể được chia sẻ dễ dàng cho người dùng khác.
+    \item Thiết lập ràng buộc tại bảng \texttt{PlaylistTrack} sử dụng \texttt{ON DELETE CASCADE} nhằm tự động dọn dẹp liên kết khi media gốc bị xóa.
+\end{itemize}
+
+\subsection{Tìm Kiếm Và Khám Phá (Search \& Discover)}
+\textbf{Endpoint:} \texttt{GET /api/search?q=\{keyword\}}
+\begin{itemize}
+    \item Tìm kiếm đồng thời từ khóa trên nhiều thực thể bao gồm: tiêu đề media, tên album, tên playlist và tên hiển thị của người dùng.
+    \item Dapper thực thi câu lệnh SQL thô với điều kiện \texttt{LIKE N'\%keyword\%'} trên nhiều bảng và thực hiện gộp kết quả trả về.
+    \item Kết quả tìm kiếm được phân loại tường minh thành các tab: Media, Albums, Playlists, Users.
+    \item Trang khám phá (Discover) hiển thị danh sách các bài hát/video mới nhất, album nổi bật và gợi ý tài khoản người dùng ngẫu nhiên.
+\end{itemize}
+
+\subsection{Chia Sẻ Media (Media Sharing)}
+\textbf{Endpoint:} \texttt{POST /api/shares}, \texttt{GET /api/shares/sent}, \texttt{GET /api/shares/inbox}
+\begin{itemize}
+    \item Cho phép người dùng chia sẻ nhanh một bài nhạc hoặc toàn bộ playlist đến một người dùng đích danh khác trên hệ thống.
+    \item Bảng \texttt{MediaShares} lưu trữ các thông tin: người gửi, người nhận, loại nội dung chia sẻ, ID nội dung và mốc thời gian thực hiện.
+    \item Ngay khi gửi thành công, hệ thống tự động đẩy thông báo real-time tới tài khoản người nhận thông qua SignalR.
+    \item Người dùng có thể chủ động kiểm tra hộp thư đến (Share Inbox) và danh sách các nội dung đã gửi (Sent Shares).
+    \item \textbf{Frontend:} Phụ trách bởi cấu trúc trang \texttt{ShareInboxPage.tsx} kết hợp modal \texttt{ShareModal.tsx}.
+\end{itemize}
+
+\subsection{Thông Báo Real-Time (Real-Time Notifications)}
+\textbf{SignalR Hub:} \texttt{/hub/notifications}
+\begin{itemize}
+    \item Sử dụng thư viện ASP.NET Core SignalR để duy trì kết nối và đẩy thông báo tức thời (push notifications) xuống client mà không cần reload.
+    \item File cấu hình \texttt{NotificationHub.cs} quản lý trạng thái kết nối WebSocket, map \texttt{UserId} cụ thể với danh sách các \texttt{ConnectionId} tương ứng.
+    \item Các loại sự kiện thông báo bao gồm: nhận nội dung share media/playlist, có người dùng mới nhấn theo dõi (follow).
+    \item JWT token được đính kèm trực tiếp thông qua query string (\texttt{?access\_token=}) để phục vụ xác thực kết nối ban đầu vào Hub.
+    \item \textbf{Frontend:} Sử dụng gói client \texttt{@microsoft/signalr}, quản lý và đồng bộ trạng thái thông báo qua \texttt{useNotificationStore} tích hợp thư viện Zustand.
+    \item Số lượng thông báo chưa đọc (unread status) hiển thị trực quan thông qua icon quả chuông (bell) tại khu vực sidebar điều hướng.
+\end{itemize}
+
+\subsection{Tương Tác Và Lịch Sử Nghe (Interactions \& Play History)}
+\textbf{Endpoint:} \texttt{POST /api/interactions/favorite}, \texttt{POST /api/interactions/history}, \texttt{GET /api/interactions/history}
+\begin{itemize}
+    \item \textbf{Yêu thích (Favorite):} Thao tác bật/tắt (toggle) yêu thích bài hát, dữ liệu lưu giữ tại bảng \texttt{Favorites}. Trang “Bài Hát Đã Thích” sẽ lọc và hiển thị danh sách này.
+    \item \textbf{Lịch sử nghe:} Mỗi khi client hoàn tất việc phát một tệp media, một request sẽ được gửi để ghi nhận thông tin (\texttt{UserId}, \texttt{MediaId}, \texttt{PlayedAt}) trực tiếp vào bảng \texttt{PlayHistory}.
+    \item API hỗ trợ truy vấn nhanh danh sách lịch sử nghe gần nhất sử dụng điều kiện sắp xếp \texttt{ORDER BY PlayedAt DESC} để hiển thị mục “Đã nghe gần đây”.
+    \item Khối dữ liệu lịch sử nghe này được thiết kế làm tiền đề cho việc phân tích và gợi ý nội dung thông minh trong tương lai.
+\end{itemize}
+
+
+\section{Sơ Đồ Luồng Các Chức Năng Chính}
+
+\subsection{Xác thực (Authentication)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_XacThuc.pdf}
+\end{figure}
+
+\subsection{Hồ sơ người dùng (User Profile)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_HoSoNguoiDung.pdf}
+\end{figure}
+
+\subsection{Thư viện Media (Media Library)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_ThuVienMedia.pdf}
+\end{figure}
+
+\subsection{Audio Player}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_AudioPlayer.pdf}
+\end{figure}
+
+\subsection{Video Player}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_VidePlayer.pdf}
+\end{figure}
+
+\subsection{Playlist}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_PlayList.pdf}
+\end{figure}
+
+\subsection{Tìm kiếm và Khám phá}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_TimKiemVaKhamPha.pdf}
+\end{figure}
+
+\subsection{Chia sẻ Media}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_ChiaSe.pdf}
+\end{figure}
+
+\subsection{Thông báo Real-time}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_ThongBao.pdf}
+\end{figure}
+
+\subsection{Tương tác và Lịch sử nghe}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Pipeline_TuongTacVaLichSu.pdf}
+\end{figure}
+
+
+
+
+\section{Khó Khăn Gặp Phải}
+\begin{enumerate}
+    \item \textbf{Quản lý transaction với Dapper:} Không tích hợp sẵn cơ chế quản lý Unit of Work tự động như EF Core. Nhóm phát triển buộc phải truyền biến \texttt{IDbTransaction} thủ công qua các hàm repository để bảo toàn tính toàn vẹn dữ liệu (ví dụ: hành động tạo user và profile bắt buộc phải chạy atomic).
+    \item \textbf{Real-time khi mở nhiều tab trình duyệt:} Một tài khoản người dùng khi mở cùng lúc nhiều tab trên trình duyệt sẽ phát sinh nhiều \texttt{ConnectionId} khác nhau. Do đó, hệ thống cần có cơ chế ánh xạ chính xác một \texttt{UserId} thành danh sách \texttt{List<ConnectionId>} trong bộ nhớ RAM, đồng thời xử lý dọn dẹp khi tab đóng (disconnect).
+    \item \textbf{Upload file và phục vụ static content:} Cần cấu hình chính xác minh\texttt { middleware UseStaticFiles()} với đường dẫn tùy biến, xử lý triệt để vấn đề mã hóa tên tệp tin tiếng Việt có dấu (URL encoding), và thiết lập giới hạn dung lượng file upload trong cấu hình web server Kestrel.
+    \item \textbf{CORS và SignalR:} Giao thức SignalR đòi hỏi thiết lập CORS đặc biệt bằng cách kích hoạt thuộc tính \texttt{AllowCredentials()} và tuyệt đối không cho phép sử dụng ký tự đại diện wildcard origin (\texttt{*}), buộc phải chỉ định tường minh địa chỉ frontend local: \texttt{http://localhost:5173}.
+    \item \textbf{Truy vấn SQL phức tạp bằng tay:} Các câu lệnh truy vấn thực hiện JOIN đồng thời nhiều bảng (media, album, owner, playlist) phải viết và thực hiện kiểm thử thủ công hoàn toàn, không có sự hỗ trợ gợi ý code thông minh (IntelliSense) mạnh mẽ như LINQ-to-SQL trên EF Core.
+\end{enumerate}
+
+\section{Hướng Xử Lý}
+\begin{enumerate}
+    \item \textbf{Transaction:} Thiết lập một interface tên \texttt{IDbConnectionFactory} chịu trách nhiệm khởi tạo và trả về một kết nối \texttt{IDbConnection} mới trên mỗi request; thực hiện truyền transaction trực tiếp qua tham số của hàm. Áp dụng triển khai mẫu thiết kế Unit of Work đơn giản đối với các tác vụ ghi đồng thời trên nhiều bảng.
+    \item \textbf{SignalR multi-connection:} Xử lý tốt nhất khi sử dụng cấu trúc dữ liệu thread-safe \texttt{ConcurrentDictionary<string, HashSet<string>>} lưu thông tin dưới dạng (\texttt{userId}, \texttt{connectionIds}). Mỗi khi đẩy notification, tiến hành duyệt và gửi qua toàn bộ danh sách \texttt{connectionIds} của user đó. Thực hiện xóa bỏ \texttt{connectionId} khỏi danh sách khi hàm \texttt{OnDisconnectedAsync} được kích hoạt.
+    \item \textbf{Upload file:} Tiến hành bổ sung cấu hình và phải thực hiện trong file \texttt{Program.cs}: \texttt{builder.WebHost.ConfigureKestrel(opt => opt.Limits.MaxRequestBodySize=...)}. Sử dụng interface \texttt{IFormFile} nhận tệp, thực hiện lưu trữ file dưới chuỗi tên đã được làm sạch (sanitized - loại bỏ ký tự đặc biệt hoặc mã hóa UTF-8). Thiết lập \texttt{StaticFileOptions} kèm thuộc tính \texttt{ServeUnknownFileTypes = true}.
+    \item \textbf{CORS:} Khai báo tường minh cấu hình \texttt{WithOrigins("http://localhost:5173")} kết hợp các phương thức \texttt{AllowCredentials()}, \texttt{AllowAnyHeader()} và \texttt{AllowAnyMethod()} ngay tại file \texttt{Program.cs} của ứng dụng API.
+    \item \textbf{Tối ưu SQL query:} Tách biệt các câu lệnh SQL phức tạp ra các file \texttt{.sql} riêng biệt để chạy thử nghiệm và kiểm tra hiệu năng (Execution Plan) trực tiếp trên công cụ SQL Server Management Studio (SSMS) trước khi đem nhúng vào mã nguồn C\#. Bổ sung các chú thích (comments) làm rõ mục tiêu xử lý của từng đoạn query.
+\end{enumerate}
+
+\section{Hướng Dẫn Chạy Project Local}
+
+\subsection{Yêu Cầu Tiên Quyết}
+Để khởi chạy ứng dụng thành công tại môi trường local, máy tính cần cài đặt sẵn:
+\begin{itemize}
+    \item .NET 10 SDK (Tải từ \texttt{dotnet.microsoft.com})
+    \item Node.js phiên bản v18 trở lên cùng trình quản lý gói npm (\texttt{nodejs.org})
+    \item SQL Server (Hỗ trợ các phiên bản LocalDB, SQLEXPRESS, hoặc bản SQL Server Full)
+    \item Git (Dùng để clone dự án mã nguồn)
+\end{itemize}
+
+\subsection{Bước 1: Chuẩn Bị Database}
+Mở công cụ quản lý SQL Server Management Studio (SSMS) hoặc Azure Data Studio, thiết lập kết nối tới instance SQL Server local đang chạy, sau đó mở một cửa sổ Query và thực thi lần lượt các khối lệnh:
+
+\begin{lstlisting}[language=SQL, caption=Khởi tạo cấu trúc Database]
+-- 1. Tao database moi
+CREATE DATABASE RhythmixDb;
+GO
+
+USE RhythmixDb;
+GO
+
+-- 2. Tao cac bang he thong
+-- Copy va chay toan bo noi dung tu file: Database/schema.sql
+
+-- 3. Seed du lieu mau dung de demo
+-- Copy va chay toan bo noi dung tu file: Database/seedData.sql
+\end{lstlisting}
+
+\subsection{Bước 2: Cấu Hình Backend}
+Di chuyển đến thư mục Backend, mở tệp tin \texttt{Backend/Rhythmix.API/appsettings.json} và tiến hành kiểm tra hoặc điều chỉnh lại chuỗi kết nối cơ sở dữ liệu \texttt{DefaultConnection}:
+
+\begin{lstlisting}[language=json, caption=Cấu hình appsettings.json]
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost\\SQLEXPRESS02;Database=RhythmixDb;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
+}
+\end{lstlisting}
+\textit{Lưu ý: Nếu instance SQL Server trên máy bạn tên khác (ví dụ: \texttt{\textbackslash SQLEXPRESS}), hãy thực hiện thay thế giá trị \texttt{\textbackslash SQLEXPRESS02} cho đúng thực tế.}
+
+\subsection{Bước 3: Chạy Backend}
+Mở ứng dụng Terminal/Command Prompt tại vị trí thư mục gốc của dự án và chạy các dòng lệnh sau:
+
+\begin{lstlisting}[language=bash, caption=Lệnh khởi chạy Backend]
+# 1. Restore cac goi thu vien NuGet
+dotnet restore Backend\Rhythmix.sln
+
+# 2. Build kiem tra loi toan bo Solution
+dotnet build Backend\Rhythmix.sln
+
+# 3. Chay du an API (thuc hien tu thu muc goc)
+dotnet run --project Backend\Rhythmix.API\Rhythmix.API.csproj
+\end{lstlisting}
+
+Sau khi khởi chạy thành công, API sẽ hoạt động tại địa chỉ \texttt{https://localhost:7xxx} (vui lòng xem log ở màn hình console để biết chính xác cổng Port).
+\begin{itemize}
+    \item Trang tài liệu Swagger UI: \texttt{https://localhost:PORT/swagger}
+    \item Trang tài liệu Scalar UI: \texttt{https://localhost:PORT/scalar/v1}
+\end{itemize}
+
+\subsection{Bước 4: Chạy Frontend}
+Mở một cửa sổ Terminal mới hoàn toàn và di chuyển vào thư mục chứa mã nguồn Frontend:
+
+\begin{lstlisting}[language=bash, caption=Lệnh khởi chạy Frontend]
+cd Frontend
+
+# Cai dat cac dependencies trong lan dau chay
+npm install
+
+# Khoi chay dev server cua Vite
+npm run dev
+\end{lstlisting}
+
+Ứng dụng frontend mặc định sẽ khởi chạy tại địa chỉ: \texttt{http://localhost:5173}.
+
+\subsection{Bước 5: Truy Cập Ứng Dụng}
+Mở trình duyệt web bất kỳ và truy cập đường dẫn \texttt{http://localhost:5173}. Sử dụng một trong hai tài khoản dữ liệu seed (chi tiết tại Mục 7) để thực hiện đăng nhập vào hệ thống.
+
+\subsection{Lưu Ý Quan Trọng}
+\begin{itemize}
+    \item Đảm bảo ứng dụng Backend luôn được khởi chạy thành công trước khi bật Frontend.
+    \item Trong trường hợp gặp lỗi liên quan đến chứng chỉ bảo mật SSL certificate tại local, hãy chạy lệnh sau để cấp quyền tin cậy: \texttt{dotnet dev-certs https --trust}.
+    \item Các tệp tin media mẫu (audio/video/hình ảnh) phục vụ demo đã được đặt sẵn bên trong thư mục \texttt{Backend/Rhythmix.API/wwwroot/uploads/}.
+\end{itemize}
+
+\section{Tài Khoản Seed Dùng Để Demo}
+Sau khi thực thi thành công tệp tin dữ liệu mẫu \texttt{Database/seedData.sql}, hệ thống sẽ tự động cấu hình sẵn hai tài khoản người dùng sau để phục vụ quá trình chấm điểm và demo chức năng:
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|l|}
+    \hline
+    \textbf{Thuộc tính} & \textbf{Tài khoản 1 (Admin)} & \textbf{Tài khoản 2 (User)} \\ \hline
+    \textbf{Email} & \texttt{jane@rhythmix.com} & \texttt{john@rhythmix.com} \\ \hline
+    \textbf{Mật khẩu} & \texttt{Jane123!} & \texttt{John123!} \\ \hline
+    \textbf{Tên hiển thị} & Administrator & John Doe \\ \hline
+    \textbf{Ảnh đại diện} & \texttt{jane.jpg} & \texttt{john.jpg} \\ \hline
+    \end{tabular}
+    \caption{Thông tin đăng nhập tài khoản seed hệ thống}
+\end{table}
+
+\subsection{Dữ Liệu Media Có Sẵn}
+Tài khoản \textbf{Jane (Administrator)} được gán mặc định là chủ sở hữu của tất cả các tệp media mẫu trên hệ thống:
+
+\begin{itemize}
+    \item \textbf{Album: 7UPPERCUTS Collection}
+    \begin{itemize}
+        \item 7UPPERCUTS\_YÊU (Định dạng: Audio, Thời lượng: 3 phút 11 giây)
+        \item 7UPPERCUTS\_DOPAMINE (Định dạng: Video, Thời lượng: 2 phút 31 giây)
+    \end{itemize}
+    \item \textbf{Album: Ngọt Collection}
+    \begin{itemize}
+        \item Ngọt\_CHUYẾN KÊNH (Định dạng: Audio, Thời lượng: 5 phút 9 giây)
+        \item Ngọt\_LẦN CUỐI (Định dạng: Audio, Thời lượng: 3 phút 41 giây)
+        \item Ngọt Thấy Chưa (Định dạng: Audio, Thời lượng: 3 phút 54 giây)
+        \item Ngọt Em dạo này (Định dạng: Audio, Thời lượng: 4 phút 12 giây)
+    \end{itemize}
+    \item \textbf{Các Media độc lập (không thuộc album):}
+    \begin{itemize}
+        \item SaigonOrchestra\_Chinatown (Định dạng: Video, Thời lượng: 4 phút 3 giây)
+        \item Quen Lắm (Định dạng: Audio, Thời lượng: 4 phút 7 giây)
+        \item Đá tan (Định dạng: Audio, Thời lượng: 3 phút 22 giây)
+        \item Trước Khi Em Tồn Tại (Định dạng: Audio, Thời lượng: 3 phút 14 giây)
+    \end{itemize}
+\end{itemize}
+
+\subsection{Playlist Có Sẵn}
+\begin{table}[h!]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+    \hline
+    \textbf{Tên playlist} & \textbf{Chủ sở hữu} & \textbf{Nội dung chi tiết} \\ \hline
+    Nhạc Chill & Jane & Bao gồm 8 bài nhạc định dạng audio (Chế độ công khai) \\ \hline
+    MV Yêu Thích & John & Bao gồm 2 video bài hát: DOPAMINE + Chinatown (Công khai) \\ \hline
+    \end{tabularx}
+    \caption{Danh sách các playlist khởi tạo sẵn}
+\end{table}
+
+\subsection{Kịch Bản Gợi Ý Demo Chức Năng}
+Để kiểm tra tính toàn vẹn và mượt mà của ứng dụng, giảng viên hoặc người kiểm thử có thể thực hiện theo kịch bản mẫu sau:
+\begin{enumerate}
+    \item Thực hiện đăng nhập bằng tài khoản người dùng \textbf{John}, truy cập vào trang Cá nhân (Profile) của \textbf{Jane} và click nút \textbf{Follow}.
+    \item Tài khoản \textbf{Jane} sẽ ngay lập tức nhận được một thông báo real-time dạng push notification ở góc màn hình (nếu Jane đang cùng đăng nhập ở một tab trình duyệt khác).
+    \item Sử dụng tài khoản của \textbf{John}, thực hiện tính năng chia sẻ bài hát “Quen Lắm” trực tiếp cho \textbf{Jane}.
+    \item Đăng nhập lại qua tài khoản \textbf{Jane}, truy cập vào mục hộp thư chia sẻ (Share Inbox) để kiểm tra nội dung vừa được gửi đến.
+    \item Thử nghiệm phát trực tiếp các tệp tin audio và video có trong thư viện để kiểm tra tính năng stream static content và thanh điều khiển nhạc.
+    \item Nhập từ khóa “7UPPERCUTS” hoặc “Ngọt” tại thanh tìm kiếm để kiểm tra kết quả truy vấn đa bảng của Dapper (Search \& Discover).
+\end{enumerate}
+
+\end{document}
