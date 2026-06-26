@@ -60,7 +60,7 @@
         
         
         {\large\bfseries\color{blue} Báo cáo Đồ án}\\[0.4cm]
-        {\LARGE\bfseries\color{blue} TuneVaut - Ứng Dụng Phát Nhạc \& Media}\\[0.4cm]
+        {\LARGE\bfseries\color{blue} Rhythmix - Ứng Dụng Phát Nhạc \& Media}\\[0.4cm]
         \textcolor{blue}{\rule{\textwidth}{1pt}}\\[2.5cm]
         
         
@@ -71,6 +71,8 @@
                 \textcolor{blue}{\textbf{GVHD:}} & \textcolor{blue}{Từ Lãng Phiêu} \\
                 \textcolor{blue}{\textbf{SV:}}   & \textcolor{blue}{Trần Đăng Khôi} \\
                 \textcolor{blue}{\textbf{MSSV:}} & \textcolor{blue}{3124410166} \\
+                \textcolor{blue}{\textbf{Nhóm:}} & \textcolor{blue}{2} \\
+                
             \end{tabular}
             }
         \end{flushleft}
@@ -224,7 +226,7 @@ Việc viết SQL thủ công ép buộc nhóm phát triển phải hiểu rõ c
 \end{itemize}
 
 \subsection{Playlist}
-\textbf{Endpoint:} \texttt{GET, POST /api/playlists}, \texttt{PUT /api/playlists/\{id\}}, \texttt{DELETE /api/playlists/\{id\}}
+\textbf{Endpoint:} \texttt{GET, POST /api/playlists}, \texttt{PUT /api/playlists/\{id\}} và cộng thêm \texttt{DELETE /api/playlists/\{id\}}
 \begin{itemize}
     \item Khởi tạo playlist đi kèm tên, mô tả ngắn và cấu hình chế độ công khai hoặc riêng tư (\texttt{IsPublic}).
     \item Thêm hoặc xóa các track nhạc ra khỏi playlist, quản lý thứ tự hiển thị linh hoạt qua cột \texttt{SortOrder} trong bảng \texttt{PlaylistTrack}.
@@ -249,7 +251,7 @@ Việc viết SQL thủ công ép buộc nhóm phát triển phải hiểu rõ c
     \item Bảng \texttt{MediaShares} lưu trữ các thông tin: người gửi, người nhận, loại nội dung chia sẻ, ID nội dung và mốc thời gian thực hiện.
     \item Ngay khi gửi thành công, hệ thống tự động đẩy thông báo real-time tới tài khoản người nhận thông qua SignalR.
     \item Người dùng có thể chủ động kiểm tra hộp thư đến (Share Inbox) và danh sách các nội dung đã gửi (Sent Shares).
-    \item \textbf{Frontend:} Phụ trách bởi cấu trúc trang \texttt{ShareInboxPage.tsx} kết hợp modal \texttt{ShareModal.tsx}.
+    \item \textbf{Frontend:} Phụ trách bởi cấu trúc trang \texttt{ShareInboxPage.tsx} kết hợp cùng với modal \texttt{ShareModal.tsx}.
 \end{itemize}
 
 \subsection{Thông Báo Real-Time (Real-Time Notifications)}
@@ -336,7 +338,14 @@ Việc viết SQL thủ công ép buộc nhóm phát triển phải hiểu rõ c
 \end{figure}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 
-
+\section{Hướng Xử Lý}
+\begin{enumerate}
+    \item \textbf{Xây dựng interface IDbConnectionFactory và Unit of Work:} Để khắc phục việc quản lý transaction thủ công, nhóm thiết lập một interface tên \texttt{IDbConnectionFactory} chịu trách nhiệm khởi tạo và trả về một kết nối \texttt{IDbConnection} mới trên mỗi request. Đồng thời, áp dụng triển khai mẫu thiết kế Unit of Work đơn giản để quản lý giao dịch tập trung, thực hiện truyền \texttt{IDbTransaction} trực tiếp qua tham số của hàm đối với các tác vụ ghi đồng thời trên nhiều bảng nhằm đảm bảo tính toàn vẹn dữ liệu.
+    \item \textbf{Sử dụng cấu trúc dữ liệu ConcurrentDictionary cho SignalR:} Nhóm giải quyết vấn đề đa kết nối bằng cách sử dụng cấu trúc dữ liệu thread-safe \texttt{ConcurrentDictionary} trong bộ nhớ RAM để ánh xạ chính xác và quản lý danh sách các \texttt{ConnectionId} thuộc về cùng một \texttt{UserId}. Cơ chế này giúp tối ưu hiệu năng tra cứu, đảm bảo an toàn luồng khi thêm mới kết nối hoặc tự động dọn dẹp khi người dùng đóng tab (disconnect).
+    \item \textbf{Cấu hình Kestrel và làm sạch tên tệp tải lên:} Tiến hành điều chỉnh dung lượng tối đa của request thông qua thuộc tính \texttt{options.Limits.MaxRequestBodySize} trong cấu hình Kestrel. Hệ thống tiếp nhận tệp tin qua interface \texttt{IFormFile}, sau đó thực hiện chuẩn hóa và làm sạch chuỗi tên tệp (\textit{sanitized}) bằng cách loại bỏ ký tự đặc biệt hoặc mã hóa UTF-8 để phục vụ chính xác qua static content; đồng thời thiết lập \texttt{StaticFileOptions} kèm thuộc tính \texttt{ServeUnknownFileTypes = true} trong middleware.
+    \item \textbf{Khai báo tường minh chính sách CORS trong Program.cs:} Để đáp ứng yêu cầu của giao thức SignalR, nhóm cấu hình tường minh \texttt{WithOrigins("http://localhost:5173")} thay vì sử dụng ký tự đại diện wildcard (\texttt{*}). Cấu hình này được kết hợp chặt chẽ cùng các phương thức \texttt{AllowCredentials()}, \texttt{AllowAnyHeader()} và \texttt{AllowAnyMethod()} ngay tại file \texttt{Program.cs} của ứng dụng API để đảm bảo frontend kết nối real-time hợp lệ.
+    \item \textbf{Tách biệt câu lệnh SQL và kiểm thử trên SSMS:} Đối với các truy vấn phức tạp kết hợp JOIN nhiều bảng, nhóm thực hiện tách biệt hoàn toàn các câu lệnh SQL ra các file \texttt{.sql} độc lập. Các đoạn script này sẽ được chạy thử nghiệm và phân tích lược đồ thực thi (\textit{Execution Plan}) trực tiếp trên công cụ SQL Server Management Studio (SSMS) để tối ưu hóa hiệu năng trước khi nhúng vào mã nguồn C\#, kết hợp bổ sung đầy đủ các dòng chú thích (comments) nhằm làm rõ mục tiêu xử lý.
+\end{enumerate}
 
 \section{Khó Khăn Gặp Phải}
 \begin{enumerate}
